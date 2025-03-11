@@ -1,6 +1,6 @@
 const { Socket } = require('../utils/Socket.js');
 const ws = require('ws');
-const SocketStatuses = require('../utils/SocketStatuses.js');
+const statuses = require('../utils/SocketStatuses.js');
 const { clients } = require('./../server.js');
 
 const handleEndChat = (sender) => {
@@ -16,7 +16,7 @@ const handleChatStart = (sender, message) => {
 }
 
 //TODO: implement these after TODOmap
-const handleMessage = (message, sender) => { 
+const handleMessage = (message, sender, wss) => { 
 	switch (sender.status){
 		case statuses.IS_CHATTING:
 			if(message == "quit"){
@@ -28,7 +28,7 @@ const handleMessage = (message, sender) => {
 				sendMessage(sender, message);
 				break;
 			}
-		case SocketStatuses.WAS_INVITED_TO_CHAT:
+		case statuses.WAS_INVITED_TO_CHAT:
 			if(message == 'yes' || message == 'Yes'){
 				//start chat and update statuses for both 
 				break;
@@ -36,35 +36,43 @@ const handleMessage = (message, sender) => {
 				// update statuses for both
 				break;
 			}
-		case SocketStatuses.REQUESTED_TO_CHAT:
+		case statuses.REQUESTED_TO_CHAT:
 			//let them cancel request or ignore message
 			break;
-		case SocketStatuses.REQUESTED_DRAWING:
+		case statuses.REQUESTED_DRAWING:
 			//use switch for drawings
 			break;
-		case SocketStatuses.DEFAULT:
+		case statuses.DEFAULT:
 			//determine intent and handle it
-			case()
+			switch (message){
+				case 'chat':
+					assistChatInvite(sender);
+					break;
+				case 'drawing':
+					sender.status = statuses.REQUESTED_DRAWING;
+					handleDrawingRequest(sender);
+					break;
+				case 'terminate':
+					handleClose(clients, sender.instance, wss);
+					break;
+				default:
+					sender.instance.send('Command not recognized. Commands are:\ndrawing\nchat\nterminate\n');
+			}
 			break;
 		default:
-			//uhhhhhh
+			throw Error('Error - Unrecognized state!');
 	}
 };
 
-const handleClose = (clients, ws, wss) => {
+const handleClose = (clients, socket, wss) => {
 	if(wss._server && wss._server.listening){
-		for(let [id, socket] in clients){
-			if (socket.instance === ws) {
-				clients.delete(socket.id);
-				break;
-			}
-		}
+		clients.delete(socket.id);
 
 		if(clients.size == 0){
-			console.log(`SERVER > Client disconnected. Server will also close.`);
+			console.log(`SERVER > Client ${ws.id} disconnected. No other sockets are connected. Server will also close.`);
 			wss.close();
 		} else {
-			console.log(`SERVER > Client disconnected. Still have ${clients.length} clients.`);
+			console.log(`SERVER > Client ${ws.id} disconnected. Still have ${clients.length} clients.`);
 		}
 	}
 }

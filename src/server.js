@@ -17,9 +17,9 @@ wss.on('connection', (ws) => {
 	clients.put(newSocket.id, newSocket);
 	ws.send(`Welcome to the Server! You are socket ${newSocket.id}.`);
 
-	ws.on('message', (message) => handleMessage(message, ws));
+	ws.on('message', (message) => handleMessage(message, newSocket, wss));
 
-	ws.on('close', () => handleClose(clients, ws, wss));
+	ws.on('close', () => handleClose(clients, newSocket, wss));
 	
 });
 
