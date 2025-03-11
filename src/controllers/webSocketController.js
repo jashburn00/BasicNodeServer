@@ -1,6 +1,6 @@
 const { Socket } = require('../utils/Socket.js');
 const ws = require('ws');
-const statuses = require('../utils/SocketStatuses.js');
+const { statuses } = require('../utils/SocketStatuses.js');
 const { clients } = require('./../server.js');
 
 const handleEndChat = (sender) => {
@@ -136,6 +136,7 @@ const rabbit = () => {
 
 //TODO: write these then necessary handlers
 const handleMessage = (message, sender, wss) => { 
+	console.log(`handling message ${message} in state ${sender.status} ppppp->${statuses.DEFAULT}`);
 	switch (sender.status){
 		case statuses.IS_CHATTING:
 			if(message == "quit"){
@@ -167,17 +168,20 @@ const handleMessage = (message, sender, wss) => {
 			break;
 		case statuses.CHOOSING_CHAT_CONNECTION:
 			handleChatChoice(sender, message);
+			break;
 		case statuses.REQUESTED_DRAWING:
 			//use switch for drawings
 			handleDrawing(sender, message);
 			break;
-		case statuses.DEFAULT:
+		case statuses.DEFAULT: // 'default'
+			console.log('touch');
 			//determine intent and handle it
 			switch (message){
 				case 'chat':
 					assistChatInvite(sender);
 					break;
 				case 'drawing':
+					console.log('touch 2');
 					sender.status = statuses.REQUESTED_DRAWING;
 					handleDrawingRequest(sender);
 					break;
@@ -189,7 +193,7 @@ const handleMessage = (message, sender, wss) => {
 			}
 			break;
 		default:
-			throw Error('Error - Unrecognized state!');
+			throw Error(`Error - Unrecognized state! State was: ${sender.status}`);
 	}
 };
 

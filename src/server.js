@@ -14,7 +14,7 @@ wss.on('connection', (ws) => {
 	console.log(`SERVER > New client connected to Server.`);
 	
 	let newSocket = new Socket(findAvailableID(clients), ws);
-	clients.put(newSocket.id, newSocket);
+	clients.set(newSocket.id, newSocket);
 	ws.send(`Welcome to the Server! You are socket ${newSocket.id}.`);
 
 	ws.on('message', (message) => handleMessage(message, newSocket, wss));

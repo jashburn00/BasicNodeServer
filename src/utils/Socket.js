@@ -1,4 +1,4 @@
-export class Socket{
+class Socket{
     constructor(id, socket){
         this._id = id;
         this._instance = socket;
