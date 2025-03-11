@@ -1,37 +1,23 @@
 const ws = require('ws');
-const Socket = require('./utils/Socket')
-let clients = [];
+const Socket = require('./utils/Socket');
+const { handleMessage } = require('./controllers/webSocketController');
+let clients = [];//TODO: make this a map (Do this first)
 
 
 const wss = new ws.Server({
 	port: 8080
+	//TODO: dynamically determine & host for local network
 });
 
+//TODO: (do this last) use new modules
 wss.on('connection', (ws) => {
 	console.log(`SERVER > New client connected to Server.`);
 	
-	let newSocket = new Socket(clients.length, ws);
-	clients.push(newSocket); //TODO: move this elsewhere
-
+	let newSocket = new Socket(clients.length+1, ws);
+	clients.push(newSocket);
 	ws.send(`Welcome to the Server! You are socket ${clients.length+1}.`);
 
-	ws.on('message', (message) => {
-		if(secretPassphrase.test(message) || access){
-			if(access){
-				console.log(`SERVER > message received.`);
-				ws.send(`message received.`);
-				handleInput(message, ws);
-			} else {
-				console.log(`SERVER > message received, user has been granted access.`);
-				ws.send(`message received, user has been granted access.`);
-				access = true;
-				handleInput(message, ws);
-			}
-		} else {
-			console.log(`SERVER > ERROR - UNAUTHORIZED USER`);
-			ws.send(`ERROR - UNAUTHORIZED USER`);
-		}
-	});
+	ws.on('message', (message) => handleMessage(message, ws));
 
 	ws.on('close', () => {
 		clients = clients.filter(client => client !== ws);
@@ -71,7 +57,6 @@ const handleInput = (inp, socket) => {
 }	
 
 
+module.exports = clients;
+
 console.log(`Server is running on port 8080`);
-
-
-
