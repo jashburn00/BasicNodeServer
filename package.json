@@ -7,12 +7,13 @@
     "test": "test"
   },
   "scripts": {
-    "test": "test/general/testAll"
+    "test": "test/general/testAll" 
   },
   "keywords": [],
   "author": "jashburn00",
   "license": "ISC",
   "dependencies": {
+    "mocha": "^11.1.0",
     "ws": "^8.18.1"
   }
 }

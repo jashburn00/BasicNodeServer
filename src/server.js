@@ -1,7 +1,8 @@
 const ws = require('ws');
 const Socket = require('./utils/Socket');
-const { handleMessage } = require('./controllers/webSocketController');
-let clients = [];//TODO: make this a map (Do this first)
+const { handleMessage, handleClose } = require('./controllers/webSocketController');
+let clients = new Map();
+let largestKey = 0;
 
 
 const wss = new ws.Server({
@@ -9,53 +10,27 @@ const wss = new ws.Server({
 	//TODO: dynamically determine & host for local network
 });
 
-//TODO: (do this last) use new modules
 wss.on('connection', (ws) => {
 	console.log(`SERVER > New client connected to Server.`);
 	
-	let newSocket = new Socket(clients.length+1, ws);
-	clients.push(newSocket);
-	ws.send(`Welcome to the Server! You are socket ${clients.length+1}.`);
+	let newSocket = new Socket(findAvailableID(clients), ws);
+	clients.put(newSocket.id, newSocket);
+	ws.send(`Welcome to the Server! You are socket ${newSocket.id}.`);
 
 	ws.on('message', (message) => handleMessage(message, ws));
 
-	ws.on('close', () => {
-		clients = clients.filter(client => client !== ws);
-
-		if(clients.length == 0){
-			console.log(`SERVER > Client disconnected. Server will also close.`);
-			wss.close();
-		} else {
-			console.log(`SERVER > Client disconnected. Still have ${clients.length} clients.`);
-		}
-	});
+	ws.on('close', () => handleClose(clients, ws, wss));
+	
 });
 
-const handleChatRequest = (socket) => {
-	if(clients.length == 0){
-		socket.send('You are the only active connection. You have no one to chat with.');
+function findAvailableID(){
+	if(largestKey == Number.MAX_SAFE_INTEGER - 1){
+		throw Error('Error - too many active connections.');
 	} else {
-		socket.send('Choose from the list of active connections to request a chat session: ');
+		largestKey++;
+		return largestKey;
 	}
 }
-
-const handleDrawRequest = (socket) => {
-
-}
-
-const handleInput = (inp, socket) => {
-	switch (inp){
-		case 'chat':
-			handleChatRequest(socket);
-			break;
-		case 'draw':
-			handleDrawRequest(socket);
-			break;
-		default:
-			socket.send('Unrecognized command.');
-	}
-}	
-
 
 module.exports = clients;
 

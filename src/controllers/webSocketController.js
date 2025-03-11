@@ -18,7 +18,7 @@ const handleChatStart = (sender, message) => {
 //TODO: implement these after TODOmap
 const handleMessage = (message, sender) => { 
 	switch (sender.status){
-		case SocketStatuses.IS_CHATTING:
+		case statuses.IS_CHATTING:
 			if(message == "quit"){
 				//end the chat for both sockets
 				handleEndChat(sender);
@@ -44,11 +44,30 @@ const handleMessage = (message, sender) => {
 			break;
 		case SocketStatuses.DEFAULT:
 			//determine intent and handle it
+			case()
 			break;
 		default:
 			//uhhhhhh
 	}
 };
+
+const handleClose = (clients, ws, wss) => {
+	if(wss._server && wss._server.listening){
+		for(let [id, socket] in clients){
+			if (socket.instance === ws) {
+				clients.delete(socket.id);
+				break;
+			}
+		}
+
+		if(clients.size == 0){
+			console.log(`SERVER > Client disconnected. Server will also close.`);
+			wss.close();
+		} else {
+			console.log(`SERVER > Client disconnected. Still have ${clients.length} clients.`);
+		}
+	}
+}
 
 module.exports = {
 	handleMessage,
