@@ -64,6 +64,7 @@ const handleCancelMessageRequest = (sender) =>{
 const handleChatChoice = (sender, message) => {
 	if(!Number.isNaN(parseInt(message))){
 		if(getClients().has(parseInt(message))){
+			//TODO: give other chatter the option to deny
 			sender.chattingWith = parseInt(message);
 			sender.status = statuses.IS_CHATTING;
 			sender.instance.send(`Your chat has started with connection ${parseInt(message)}.`);
