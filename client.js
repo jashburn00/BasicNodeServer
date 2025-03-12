@@ -10,7 +10,9 @@ rl.on('line', inputHandler);
 
 let input = '';
 
-const socket = new ws.WebSocket('ws://localhost:8080');
+//TODO: you will need to change this value to the local IP of your host machine.
+const localIP = '123.123.123.123';
+const socket = new ws.WebSocket('ws://'+localIP+':8080');
 
 
 socket.on('open', socketOpenHandler);
