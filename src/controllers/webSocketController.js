@@ -189,13 +189,13 @@ const handleMessage = (message, sender, wss) => {
 					handleClose(clients, sender.instance, wss);
 					break;
 				default:
-					sender.instance.send('Command not recognized. Commands are:\ndrawing\nchat\nterminate\n');
+					sender.instance.send(`Command "${message}" not recognized. Commands are:\ndrawing\nchat\nterminate\n`);
 			}
 			break;
 		default:
 			throw Error(`Error - Unrecognized state! State was: ${sender.status}`);
 	}
-};
+}
 
 const assistChatInvite = (sender) => {
 	if(clients.size > 1){
