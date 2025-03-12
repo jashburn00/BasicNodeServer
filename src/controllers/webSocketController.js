@@ -1,7 +1,7 @@
 const { Socket } = require('../utils/Socket.js');
 const ws = require('ws');
 const { statuses } = require('../utils/SocketStatuses.js');
-const { clients } = require('./../server.js');
+const {storeClientConnection, removeClientConnection, getClients, getObjectFromSocket } = require('./clientsController.js');
 
 const handleEndChat = (sender) => {
 	//end chat for both participants and update statuses
@@ -9,18 +9,18 @@ const handleEndChat = (sender) => {
 	sender.previousStatus = null;
 	sender.instance.send('You have ended the chat session.');
 
-	clients.get(sender.chattingWith).status = statuses.DEFAULT;
-	clients.get(sender.chattingWith).previousStatus = null;
-	clients.get(sender.chattingWith).instance.send('The chat session was ended by another user.');
+	getClients().get(sender.chattingWith).status = statuses.DEFAULT;
+	getClients().get(sender.chattingWith).previousStatus = null;
+	getClients().get(sender.chattingWith).instance.send('The chat session was ended by another user.');
 
 	//reset all the chattingWith etc.
-	clients.get(sender.chattingWith).chattingWith = null;
+	getClients().get(sender.chattingWith).chattingWith = null;
 	sender.chattingWith = null;
 }
 
 const sendChatMessage = (sender, message) => {
 	if(sender.chattingWith && typeof Number.isInteger(sender.chattingWith)){
-		clients.get(sender.chattingWith).instance.send(message);
+		getClients().get(sender.chattingWith).instance.send(message);
 	} else {
 		sender.instance.send('ERROR - Error sending message.');
 	}
@@ -31,12 +31,12 @@ const handleChatAccepted = (sender) => {
 	sender.chattingWith = sender.requestedChatBy;
 	sender.requestedChatBy = null;
 
-	clients.get(sender.chattingWith).state = statuses.IS_CHATTING;
-	clients.get(sender.chattingWith).requestedChatWith = null;
-	clients.get(sender.chattingWith).chattingWith = sender.id;
+	getClients().get(sender.chattingWith).state = statuses.IS_CHATTING;
+	getClients().get(sender.chattingWith).requestedChatWith = null;
+	getClients().get(sender.chattingWith).chattingWith = sender.id;
 
 	//notify both
-	clients.get(sender.chattingWith).instance.send(`Your request to chat has been accepted! You are now chatting with connection ${sender.id}.`);
+	getClients().get(sender.chattingWith).instance.send(`Your request to chat has been accepted! You are now chatting with connection ${sender.id}.`);
 	sender.instance.send(`You have accepted the invitation. You are now chatting with connection ${sender.chattingWith}.`);
 }
 
@@ -45,16 +45,16 @@ const handleChatDenied = (sender) => {
 	sender.previousStatus = null;
 	sender.instance.send('You have denied the chat request.');
 
-	clients.get(sender.requestedChatBy).instance.send('Your request to chat has been denied.');
-	clients.get(sender.requestedChatBy).status = clients.get(sender.requestedChatBy).previousStatus;
-	clients.get(sender.requestedChatBy).previousStatus = null;
+	getClients().get(sender.requestedChatBy).instance.send('Your request to chat has been denied.');
+	getClients().get(sender.requestedChatBy).status = getClients().get(sender.requestedChatBy).previousStatus;
+	getClients().get(sender.requestedChatBy).previousStatus = null;
 }
 
 const handleCancelMessageRequest = (sender) =>{
 	//notify formerly invited party
-	clients.get(sender.requestedChatWith).instance.send(`Connection ${sender.id} has cancelled their chat request.`);
-	clients.get(sender.requestedChatWith).status = clients.get(sender.requestedChatWith).previousStatus;
-	clients.get(sender.requestedChatWith).previousStatus = null;
+	getClients().get(sender.requestedChatWith).instance.send(`Connection ${sender.id} has cancelled their chat request.`);
+	getClients().get(sender.requestedChatWith).status = getClients().get(sender.requestedChatWith).previousStatus;
+	getClients().get(sender.requestedChatWith).previousStatus = null;
 
 	sender.instance.send('Your request has been cancelled.');
 	sender.status = sender.previousStatus;
@@ -63,13 +63,13 @@ const handleCancelMessageRequest = (sender) =>{
 
 const handleChatChoice = (sender, message) => {
 	if(!Number.isNaN(parseInt(message))){
-		if(clients.has(parseInt(message))){
+		if(getClients().has(parseInt(message))){
 			sender.chattingWith = parseInt(message);
 			sender.status = statuses.IS_CHATTING;
 			sender.instance.send(`Your chat has started with connection ${parseInt(message)}.`);
-			clients.get(sender.chattingWith).chattingWith = sender.id;
-			clients.get(sender.chattingWith).status = statuses.IS_CHATTING;
-			clients.get(sender.chattingWith).instance.send(`Your chat has started with connection ${sender.id}.`);
+			getClients().get(sender.chattingWith).chattingWith = sender.id;
+			getClients().get(sender.chattingWith).status = statuses.IS_CHATTING;
+			getClients().get(sender.chattingWith).instance.send(`Your chat has started with connection ${sender.id}.`);
 		}
 	}
 }
@@ -102,7 +102,7 @@ const handleDrawing = (sender, message) => {
 }
 
 const bionicle1 = () =>{
-	return ":( o o ):\n \\    /\n ( O )";
+	return "\n:( o o ):\n \\    /\n ( O )";
 	/*
 		:( o o ):
 		 \    /
@@ -112,7 +112,7 @@ const bionicle1 = () =>{
 }
 
 const bionicle2 = () => {
-	return "-----(-_-)-----\n|    |   |    |\n|    |   |    |\n|    |   |    |\n\"    |   |    \"\n   _|    |_";
+	return "\n-----(-_-)-----\n|    |   |    |\n|    |   |    |\n|    |   |    |\n\"    |   |    \"\n   _|    |_";
 	/*
 		-----(-_-)-----
 		|    |   |    |
@@ -125,7 +125,7 @@ const bionicle2 = () => {
 }
 
 const rabbit = () => {
-	return " (\\_/)\n( . .)\no(\")(\")";
+	return "\n (\\_/)\n( . .)\no(\")(\")";
 	/*
 		 (\_/)
 		( . .)
@@ -136,7 +136,9 @@ const rabbit = () => {
 
 //TODO: write these then necessary handlers
 const handleMessage = (message, sender, wss) => { 
-	console.log(`handling message ${message} in state ${sender.status} ppppp->${statuses.DEFAULT}`);
+	message = message+'';
+	//console.log(`handling input ${typeof message} ${message} in state ${sender.status} ppppp->${statuses.DEFAULT}`);
+	
 	switch (sender.status){
 		case statuses.IS_CHATTING:
 			if(message == "quit"){
@@ -174,19 +176,19 @@ const handleMessage = (message, sender, wss) => {
 			handleDrawing(sender, message);
 			break;
 		case statuses.DEFAULT: // 'default'
-			console.log('touch');
+			// console.log('touch');
 			//determine intent and handle it
 			switch (message){
-				case 'chat':
+				case "chat":
 					assistChatInvite(sender);
 					break;
-				case 'drawing':
-					console.log('touch 2');
+				case "drawing":
+					// console.log('touch 2');
 					sender.status = statuses.REQUESTED_DRAWING;
 					handleDrawingRequest(sender);
 					break;
-				case 'terminate':
-					handleClose(clients, sender.instance, wss);
+				case "terminate":
+					removeClientConnection(getClients().get(sender.id), wss);
 					break;
 				default:
 					sender.instance.send(`Command "${message}" not recognized. Commands are:\ndrawing\nchat\nterminate\n`);
@@ -198,15 +200,15 @@ const handleMessage = (message, sender, wss) => {
 }
 
 const assistChatInvite = (sender) => {
-	if(clients.size > 1){
+	if(getClients().size > 1){
 		let ret = 'Please choose one of the following connections to invite to chat:\n';
-		for(let [id, socket] of clients){
+		for(let [id, socket] of getClients()){
 			if(id != sender.id){
 				ret += id+'\n';
 			}
 		}
 		sender.status = statuses.CHOOSING_CHAT_CONNECTION;
-		sender.send(ret);
+		sender.instance.send(ret);
 	} else {
 		//you so lonely :(
 		sender.instance.send('You are the only connection. You cannot chat with yourself unless you have schizophrenia.');
@@ -219,21 +221,6 @@ const handleDrawingRequest = (sender) => {
 	sender.instance.send('Please enter one of the options:\nbionicle 1\nbionicle 2\nrabbit\ncancel');
 }
 
-const handleClose = (clients, socket, wss) => {
-	if(wss._server && wss._server.listening){
-		clients.delete(socket.id);
-
-		if(clients.size == 0){
-			console.log(`SERVER > Client ${ws.id} disconnected. No other sockets are connected. Server will also close.`);
-			wss.close();
-		} else {
-			console.log(`SERVER > Client ${ws.id} disconnected. Still have ${clients.length} clients.`);
-		}
-	}
-}
-
 module.exports = {
-	handleMessage,
-	handleClose
-	//do I even need more?
+	handleMessage
 };

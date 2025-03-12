@@ -33,7 +33,7 @@ function messageToServerHandler(data){
 }
 
 function messageFromServerHandler(data){
-	console.log(`RESPONSE FROM SERVER > ${data}`);
+	console.log(`\nRESPONSE FROM SERVER > ${data}`);
 }
 
 function inputHandler(inp){
