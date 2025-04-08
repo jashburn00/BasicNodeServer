@@ -1,5 +1,7 @@
 # BasicNodeServer a.k.a. "chatboing"
-A basic implementation of a live chat server (with some other random functions) intended for me to learn and illustrate Node servers and web sockets.
+A basic implementation of a live chat server (with some other random functions) intended for me to learn and illustrate Node servers and web sockets. 
+
+*The code in this branch is meant to be run locally, on one machine.*
 
 ## How To Use
 1. navigate (from the root directory) to the 'src' folder and use Node to run server.js
