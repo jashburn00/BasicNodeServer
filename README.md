@@ -8,6 +8,8 @@ A basic implementation of a live chat server (with some other random functions) 
     - e.g. <br>`cd src`<br>`node server.js`
 2. then, navigate back to the root directory of the cloned project in your terminal and use Node to run the client.js file. <br>*Do this with a different terminal window so you don't have to close the server!*
     - e.g. <br>`cd ..`<br>`node client.js`
+### Usage Example:
+[
 
 ## System Requirements
 - Node installed
