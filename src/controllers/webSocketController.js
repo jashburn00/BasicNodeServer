@@ -135,7 +135,6 @@ const rabbit = () => {
 	*/
 }
 
-//TODO: write these then necessary handlers
 const handleMessage = (message, sender, wss) => { 
 	message = message+'';
 	//console.log(`handling input ${typeof message} ${message} in state ${sender.status} ppppp->${statuses.DEFAULT}`);
@@ -211,7 +210,6 @@ const assistChatInvite = (sender) => {
 		sender.status = statuses.CHOOSING_CHAT_CONNECTION;
 		sender.instance.send(ret);
 	} else {
-		//you so lonely :(
 		sender.instance.send('You are the only connection. You cannot chat with yourself unless you have schizophrenia.');
 	}
 }

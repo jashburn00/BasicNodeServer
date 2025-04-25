@@ -5,8 +5,6 @@ const { storeClientConnection, removeClientConnection, getClients, getObjectFrom
 
 const wss = new ws.Server({
 	port: 8080
-	//TODO: fix circular dependency
-	//TODO: dynamically determine & host for local network
 });
 
 wss.on('connection', (ws) => {
